@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Clock, TrendingUp, RefreshCw } from "lucide-react";
+import { Clock, TrendingUp, RefreshCw, Settings } from "lucide-react";
 
 export default function Home() {
   const [timeoutDialogOpen, setTimeoutDialogOpen] = useState(false);
@@ -137,15 +137,26 @@ export default function Home() {
               <Clock className="w-8 h-8 text-primary" />
               <h1 className="text-3xl font-bold text-foreground">自助餐桌台计时系统</h1>
             </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => refetchStatus()}
-              className="gap-2"
-            >
-              <RefreshCw className="w-4 h-4" />
-              刷新
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => window.location.href = '/admin'}
+                className="gap-2"
+              >
+                <Settings className="w-4 h-4" />
+                管理后台
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => refetchStatus()}
+                className="gap-2"
+              >
+                <RefreshCw className="w-4 h-4" />
+                刷新
+              </Button>
+            </div>
           </div>
         </div>
       </header>
