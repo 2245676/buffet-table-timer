@@ -96,23 +96,22 @@ export function TableCard({
     <Card
       className={`border-2 transition-all ${getStatusColor(
         table.status
-      )} hover:shadow-md h-full flex flex-col`}
+      )} hover:shadow-md h-48 flex flex-col`}
     >
       <CardContent className="p-3 flex flex-col h-full">
-        {/* 顶部行：桌号、状态、信息 */}
-        <div className="flex items-center justify-between gap-3 mb-2 flex-shrink-0">
-          {/* 左侧：桌号和状态 */}
-          <div className="flex items-center gap-2 min-w-0">
-            <Clock className="w-4 h-4 text-primary flex-shrink-0" />
-            <h3 className="text-base font-bold text-foreground whitespace-nowrap">
-              桌号 {table.tableNumber}
-            </h3>
-            {getStatusBadge(table.status)}
-          </div>
+        {/* 顶部行：桌号在最上面 */}
+        <div className="flex items-center justify-between gap-2 mb-2 flex-shrink-0">
+          <h3 className="text-base font-bold text-foreground whitespace-nowrap">
+            桌号 {table.tableNumber}
+          </h3>
+          {getStatusBadge(table.status)}
+        </div>
 
-          {/* 中间：时间信息 */}
+        {/* 第二行：时间信息 */}
+        <div className="flex items-center justify-between gap-3 mb-2 flex-shrink-0">
+          {/* 时间信息 */}
           {isActive && (
-            <div className="flex items-center gap-3 text-xs min-w-0">
+            <div className="flex items-center gap-3 text-xs min-w-0 flex-1">
               <div className="whitespace-nowrap">
                 <span className="text-muted-foreground">开始:</span>
                 <span className="font-semibold ml-1">{formatTime(session!.startTime)}</span>

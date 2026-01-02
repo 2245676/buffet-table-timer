@@ -10,8 +10,17 @@ import { Clock, RefreshCw, Settings } from "lucide-react";
 export default function Home() {
   const [timeoutDialogOpen, setTimeoutDialogOpen] = useState(false);
   const [timeoutTables, setTimeoutTables] = useState<string[]>([]);
+  const [currentTime, setCurrentTime] = useState<string>(new Date().toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit", second: "2-digit" }));
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const lastCheckRef = useRef<number>(Date.now());
+
+  // 更新当前时间
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date().toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit", second: "2-digit" }));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   // 查询所有桌台状态
   const { data: tableStatus, refetch: refetchStatus } = trpc.monitor.getAllStatus.useQuery(undefined, {
@@ -141,6 +150,11 @@ export default function Home() {
                 <h1 className="text-3xl font-bold text-white">自助餐桌台计时系统</h1>
                 <p className="text-blue-100 text-sm mt-1">实时监控 • 智能提醒 • 高效管理</p>
               </div>
+            </div>
+            {/* 中间：当前时间 */}
+            <div className="text-center">
+              <div className="text-4xl font-bold text-white tracking-wider">{currentTime}</div>
+              <p className="text-blue-100 text-xs mt-1">当前时间</p>
             </div>
             <div className="flex gap-2">
               <Button

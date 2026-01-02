@@ -23,7 +23,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Settings, Plus, Edit, Trash2, ArrowLeft } from "lucide-react";
+import { Settings, Plus, Edit, Trash2, ArrowLeft, Mail } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import { useLocation } from "wouter";
 import { Table } from "../../../drizzle/schema";
 
@@ -39,6 +40,7 @@ export default function Admin() {
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [emailNotificationEnabled, setEmailNotificationEnabled] = useState(true);
   const [selectedTable, setSelectedTable] = useState<Table | null>(null);
   const [formData, setFormData] = useState<TableFormData>({
     tableNumber: "",
@@ -149,7 +151,17 @@ export default function Admin() {
               <Settings className="w-8 h-8 text-primary" />
               <h1 className="text-3xl font-bold text-foreground">桌台管理后台</h1>
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-4 items-center">
+              {/* 邮件通知开关 */}
+              <div className="flex items-center gap-2 px-4 py-2 bg-blue-50 rounded-lg border border-blue-200">
+                <Mail className="w-4 h-4 text-blue-600" />
+                <span className="text-sm font-medium text-blue-900">邮件通知</span>
+                <Switch
+                  checked={emailNotificationEnabled}
+                  onCheckedChange={setEmailNotificationEnabled}
+                  className="ml-2"
+                />
+              </div>
               <Button variant="outline" onClick={() => setLocation("/")}>
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 返回主页

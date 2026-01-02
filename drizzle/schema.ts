@@ -82,3 +82,24 @@ export const diningSessions = mysqlTable("dining_sessions", {
 
 export type DiningSession = typeof diningSessions.$inferSelect;
 export type InsertDiningSession = typeof diningSessions.$inferInsert;
+
+/**
+ * 邮件通知配置表
+ * 存储管理员的邮件通知设置
+ */
+export const emailNotificationSettings = mysqlTable("email_notification_settings", {
+  id: int("id").autoincrement().primaryKey(),
+  /** 用户ID */
+  userId: int("userId").notNull().unique(),
+  /** 是否启用邮件通知 */
+  enabled: int("enabled").notNull().default(1),
+  /** 超时提醒邮件 */
+  notifyOnTimeout: int("notifyOnTimeout").notNull().default(1),
+  /** 邮件发送间隔（分钟） */
+  notificationInterval: int("notificationInterval").notNull().default(5),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type EmailNotificationSettings = typeof emailNotificationSettings.$inferSelect;
+export type InsertEmailNotificationSettings = typeof emailNotificationSettings.$inferInsert;
