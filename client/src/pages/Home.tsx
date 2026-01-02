@@ -1,11 +1,11 @@
 import { useEffect, useState, useRef } from "react";
 import { trpc } from "@/lib/trpc";
 import { TableCard } from "@/components/TableCard";
+import { QueuePredictionPanel } from "@/components/QueuePredictionPanel";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Clock, TrendingUp, RefreshCw, Settings } from "lucide-react";
+import { Clock, RefreshCw, Settings } from "lucide-react";
 
 export default function Home() {
   const [timeoutDialogOpen, setTimeoutDialogOpen] = useState(false);
@@ -128,21 +128,26 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-50">
       {/* 头部 */}
-      <header className="bg-card shadow-elegant border-b sticky top-0 z-10">
+      <header className="bg-gradient-to-r from-primary to-primary/80 shadow-elegant border-b sticky top-0 z-20">
         <div className="container py-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <Clock className="w-8 h-8 text-primary" />
-              <h1 className="text-3xl font-bold text-foreground">自助餐桌台计时系统</h1>
+              <div className="p-2 bg-white rounded-lg shadow-md">
+                <Clock className="w-8 h-8 text-primary" />
+              </div>
+              <div>
+                <h1 className="text-3xl font-bold text-white">自助餐桌台计时系统</h1>
+                <p className="text-blue-100 text-sm mt-1">实时监控 • 智能提醒 • 高效管理</p>
+              </div>
             </div>
             <div className="flex gap-2">
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => window.location.href = '/admin'}
-                className="gap-2"
+                onClick={() => (window.location.href = "/admin")}
+                className="gap-2 bg-white hover:bg-blue-50"
               >
                 <Settings className="w-4 h-4" />
                 管理后台
@@ -151,7 +156,7 @@ export default function Home() {
                 variant="outline"
                 size="sm"
                 onClick={() => refetchStatus()}
-                className="gap-2"
+                className="gap-2 bg-white hover:bg-blue-50"
               >
                 <RefreshCw className="w-4 h-4" />
                 刷新
@@ -162,56 +167,32 @@ export default function Home() {
       </header>
 
       <main className="container py-8">
-        {/* 桌台网格 */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8">
-          {tableStatus?.map(({ table, session }) => (
-            <TableCard
-              key={table.id}
-              table={table}
-              session={session}
-              onStartDining={(tableId) => startDining.mutate({ tableId })}
-              onExtend={(sessionId, minutes) =>
-                extendDining.mutate({ sessionId, extensionMinutes: minutes })
-              }
-              onComplete={(sessionId) => completeDining.mutate({ sessionId })}
-            />
-          ))}
-        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          {/* 左侧排队预测面板 */}
+          <div className="lg:col-span-1">
+            {queuePrediction && (
+              <QueuePredictionPanel prediction={queuePrediction} />
+            )}
+          </div>
 
-        {/* 排队预测 */}
-        {queuePrediction && queuePrediction.length > 0 && (
-          <Card className="shadow-elegant">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <TrendingUp className="w-5 h-5" />
-                排队预测
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                {queuePrediction.slice(0, 8).map((item, index) => (
-                  <div
-                    key={item.tableId}
-                    className="p-4 rounded-lg border bg-muted/50"
-                  >
-                    <div className="text-sm text-muted-foreground mb-1">
-                      第 {index + 1} 位
-                    </div>
-                    <div className="font-bold text-lg">桌号 {item.tableNumber}</div>
-                    <div className="text-sm text-muted-foreground mt-2">
-                      {item.status === "idle"
-                        ? "立即可用"
-                        : `预计 ${new Date(item.availableAt).toLocaleTimeString("zh-CN", {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })} 可用`}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        )}
+          {/* 右侧桌台网格 */}
+          <div className="lg:col-span-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {tableStatus?.map(({ table, session }) => (
+                <TableCard
+                  key={table.id}
+                  table={table}
+                  session={session}
+                  onStartDining={(tableId) => startDining.mutate({ tableId })}
+                  onExtend={(sessionId, minutes) =>
+                    extendDining.mutate({ sessionId, extensionMinutes: minutes })
+                  }
+                  onComplete={(sessionId) => completeDining.mutate({ sessionId })}
+                />
+              ))}
+            </div>
+          </div>
+        </div>
       </main>
 
       {/* 超时提醒对话框 */}
