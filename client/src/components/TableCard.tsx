@@ -1,10 +1,21 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Clock, Users, PlayCircle, PauseCircle, Plus } from "lucide-react";
-import { Table, DiningSession } from "../../../drizzle/schema";
-import { formatDistanceToNow } from "date-fns";
-import { zhCN } from "date-fns/locale";
+import { Clock, PlayCircle, PauseCircle, Plus } from "lucide-react";
+import type { Table } from "../../../drizzle/schema";
+
+interface DiningSession {
+  id: number;
+  tableId: number;
+  startTime: number;
+  endTime: number;
+  actualEndTime: number | null;
+  bufferEndTime: number | null;
+  extensionCount: number;
+  totalExtensionMinutes: number;
+  isCompleted: number;
+  lastAlertTime: number | null;
+}
 
 interface TableCardProps {
   table: Table;
@@ -12,16 +23,61 @@ interface TableCardProps {
   onStartDining: (tableId: number) => void;
   onExtend: (sessionId: number, minutes: number) => void;
   onComplete: (sessionId: number) => void;
-  remainingMinutes?: number;
 }
 
-const statusConfig = {
-  idle: { label: "空闲", className: "status-idle", icon: PlayCircle },
-  dining: { label: "用餐中", className: "status-dining", icon: Clock },
-  warning: { label: "即将超时", className: "status-warning", icon: Clock },
-  timeout: { label: "已超时", className: "status-timeout", icon: Clock },
-  buffer: { label: "缓冲期", className: "status-buffer", icon: PauseCircle },
-  disabled: { label: "停用", className: "status-disabled", icon: PauseCircle },
+const getStatusColor = (status: string) => {
+  switch (status) {
+    case "idle":
+      return "bg-green-50 border-green-200";
+    case "dining":
+      return "bg-blue-50 border-blue-200";
+    case "warning":
+      return "bg-yellow-50 border-yellow-200";
+    case "timeout":
+      return "bg-red-50 border-red-200";
+    case "buffer":
+      return "bg-purple-50 border-purple-200";
+    case "disabled":
+      return "bg-gray-50 border-gray-200";
+    default:
+      return "bg-white border-gray-200";
+  }
+};
+
+const getStatusBadge = (status: string) => {
+  switch (status) {
+    case "idle":
+      return <Badge className="bg-green-100 text-green-700 border-green-300 text-xs">空闲</Badge>;
+    case "dining":
+      return <Badge className="bg-blue-100 text-blue-700 border-blue-300 text-xs">用餐中</Badge>;
+    case "warning":
+      return <Badge className="bg-yellow-100 text-yellow-700 border-yellow-300 text-xs">即将超时</Badge>;
+    case "timeout":
+      return <Badge className="bg-red-100 text-red-700 border-red-300 text-xs">已超时</Badge>;
+    case "buffer":
+      return <Badge className="bg-purple-100 text-purple-700 border-purple-300 text-xs">缓冲期</Badge>;
+    case "disabled":
+      return <Badge className="bg-gray-100 text-gray-700 border-gray-300 text-xs">停用</Badge>;
+    default:
+      return <Badge className="text-xs">未知</Badge>;
+  }
+};
+
+const formatTime = (timestamp: number) => {
+  const date = new Date(timestamp);
+  return date.toLocaleTimeString("zh-CN", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+};
+
+const formatDuration = (ms: number) => {
+  const minutes = Math.floor(ms / 60000);
+  const hours = Math.floor(minutes / 60);
+  if (hours > 0) {
+    return `${hours}h${minutes % 60}m`;
+  }
+  return `${minutes}m`;
 };
 
 export function TableCard({
@@ -30,160 +86,129 @@ export function TableCard({
   onStartDining,
   onExtend,
   onComplete,
-  remainingMinutes,
 }: TableCardProps) {
-  const config = statusConfig[table.status];
-  const StatusIcon = config.icon;
-
-  const formatTime = (ms: number) => {
-    const totalMinutes = Math.floor(ms / 60000);
-    const hours = Math.floor(totalMinutes / 60);
-    const minutes = totalMinutes % 60;
-    return hours > 0 ? `${hours}小时${minutes}分钟` : `${minutes}分钟`;
-  };
-
-  const getRemainingTime = () => {
-    if (!session || table.status === "buffer") return null;
-    const now = Date.now();
-    const remaining = session.endTime - now;
-    return remaining;
-  };
-
-  const remainingTime = getRemainingTime();
+  const isActive = session && session.isCompleted === 0;
+  const now = Date.now();
+  const remaining = isActive ? Math.max(0, session!.endTime - now) : 0;
+  const remainingDisplay = remaining > 0 ? formatDuration(remaining) : "已超时";
 
   return (
-    <Card className={`shadow-elegant hover:shadow-elegant-lg transition-shadow duration-300 ${config.className} border-2`}>
-      <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-2xl font-bold flex items-center gap-2">
-            <StatusIcon className="w-6 h-6" />
-            桌号 {table.tableNumber}
-          </CardTitle>
-          <Badge variant="outline" className="text-sm font-semibold">
-            {config.label}
-          </Badge>
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {/* 桌台信息 */}
-        <div className="flex items-center gap-4 text-sm">
-          <div className="flex items-center gap-1">
-            <Users className="w-4 h-4" />
-            <span>最多 {table.maxCapacity} 人</span>
+    <Card
+      className={`border-2 transition-all ${getStatusColor(
+        table.status
+      )} hover:shadow-md`}
+    >
+      <CardContent className="p-3">
+        {/* 顶部行：桌号、状态、信息 */}
+        <div className="flex items-center justify-between gap-3 mb-2">
+          {/* 左侧：桌号和状态 */}
+          <div className="flex items-center gap-2 min-w-0">
+            <Clock className="w-4 h-4 text-primary flex-shrink-0" />
+            <h3 className="text-base font-bold text-foreground whitespace-nowrap">
+              桌号 {table.tableNumber}
+            </h3>
+            {getStatusBadge(table.status)}
           </div>
-          <div className="flex items-center gap-1">
-            <Clock className="w-4 h-4" />
-            <span>标准 {table.defaultDuration} 分钟</span>
-          </div>
-        </div>
 
-        {/* 用餐信息 */}
-        {session && table.status !== "buffer" && (
-          <div className="space-y-2 pt-2 border-t">
-            <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">开始时间</span>
-              <span className="font-medium">
-                {new Date(session.startTime).toLocaleTimeString("zh-CN", {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })}
-              </span>
-            </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">预计结束</span>
-              <span className="font-medium">
-                {new Date(session.endTime).toLocaleTimeString("zh-CN", {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })}
-              </span>
-            </div>
-            {remainingTime !== null && (
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">剩余时间</span>
+          {/* 中间：时间信息 */}
+          {isActive && (
+            <div className="flex items-center gap-3 text-xs min-w-0">
+              <div className="whitespace-nowrap">
+                <span className="text-muted-foreground">开始:</span>
+                <span className="font-semibold ml-1">{formatTime(session!.startTime)}</span>
+              </div>
+              <div className="whitespace-nowrap">
+                <span className="text-muted-foreground">结束:</span>
+                <span className="font-semibold ml-1">{formatTime(session!.endTime)}</span>
+              </div>
+              <div className="whitespace-nowrap">
                 <span
-                  className={`font-bold text-lg ${
-                    remainingTime <= 300000
-                      ? "text-red-600 animate-pulse"
-                      : remainingTime <= 900000
+                  className={`font-bold ml-1 ${
+                    remaining <= 300000
+                      ? "text-red-600"
+                      : remaining <= 900000
                       ? "text-yellow-600"
                       : "text-blue-600"
                   }`}
                 >
-                  {remainingTime > 0 ? formatTime(remainingTime) : "已超时"}
+                  {remainingDisplay}
                 </span>
               </div>
-            )}
-            {session.extensionCount > 0 && (
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">已延时</span>
-                <span className="font-medium">
-                  {session.extensionCount} 次 ({session.totalExtensionMinutes} 分钟)
-                </span>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* 缓冲期信息 */}
-        {table.status === "buffer" && session?.bufferEndTime && (
-          <div className="space-y-2 pt-2 border-t">
-            <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">缓冲期结束</span>
-              <span className="font-medium">
-                {formatDistanceToNow(new Date(session.bufferEndTime), {
-                  addSuffix: true,
-                  locale: zhCN,
-                })}
-              </span>
             </div>
-          </div>
-        )}
-
-        {/* 操作按钮 */}
-        <div className="flex gap-2 pt-2">
-          {table.status === "idle" && (
-            <Button
-              onClick={() => onStartDining(table.id)}
-              className="flex-1"
-              size="lg"
-            >
-              <PlayCircle className="w-4 h-4 mr-2" />
-              开始用餐
-            </Button>
           )}
 
-          {session && table.status !== "idle" && table.status !== "buffer" && (
+          {/* 缓冲期信息 */}
+          {table.status === "buffer" && session?.bufferEndTime && (
+            <div className="text-xs text-muted-foreground whitespace-nowrap">
+              缓冲期至 {formatTime(session.bufferEndTime)}
+            </div>
+          )}
+
+          {/* 空闲状态 */}
+          {table.status === "idle" && (
+            <div className="text-xs text-muted-foreground whitespace-nowrap">
+              空闲可用
+            </div>
+          )}
+        </div>
+
+        {/* 延时信息 */}
+        {isActive && session!.extensionCount > 0 && (
+          <div className="text-xs text-muted-foreground mb-2">
+            已延时 {session!.extensionCount} 次 ({session!.totalExtensionMinutes} 分钟)
+          </div>
+        )}
+
+        {/* 底部行：操作按钮 */}
+        <div className="flex gap-2 flex-wrap">
+          {table.status === "idle" ? (
+            <Button
+              onClick={() => onStartDining(table.id)}
+              className="flex-1 min-w-[80px] bg-red-600 hover:bg-red-700 text-white text-xs h-8"
+              size="sm"
+            >
+              <PlayCircle className="w-3 h-3 mr-1" />
+              开始用餐
+            </Button>
+          ) : isActive ? (
             <>
               <Button
-                onClick={() => onExtend(session.id, 5)}
+                onClick={() => onExtend(session!.id, 5)}
                 variant="outline"
                 size="sm"
-                className="flex-1"
+                className="flex-1 min-w-[60px] text-xs h-8"
               >
-                <Plus className="w-4 h-4 mr-1" />
-                +5分钟
+                <Plus className="w-3 h-3 mr-1" />
+                +5分
               </Button>
               <Button
-                onClick={() => onExtend(session.id, 10)}
+                onClick={() => onExtend(session!.id, 10)}
                 variant="outline"
                 size="sm"
-                className="flex-1"
+                className="flex-1 min-w-[60px] text-xs h-8"
               >
-                <Plus className="w-4 h-4 mr-1" />
-                +10分钟
+                <Plus className="w-3 h-3 mr-1" />
+                +10分
               </Button>
               <Button
-                onClick={() => onComplete(session.id)}
-                variant="default"
+                onClick={() => onComplete(session!.id)}
+                className="flex-1 min-w-[60px] bg-red-600 hover:bg-red-700 text-white text-xs h-8"
                 size="sm"
-                className="flex-1"
               >
-                <PauseCircle className="w-4 h-4 mr-1" />
+                <PauseCircle className="w-3 h-3 mr-1" />
                 结束
               </Button>
             </>
-          )}
+          ) : table.status === "buffer" ? (
+            <Button
+              onClick={() => onComplete(session!.id)}
+              className="w-full bg-red-600 hover:bg-red-700 text-white text-xs h-8"
+              size="sm"
+            >
+              <PauseCircle className="w-3 h-3 mr-1" />
+              结束缓冲期
+            </Button>
+          ) : null}
         </div>
       </CardContent>
     </Card>

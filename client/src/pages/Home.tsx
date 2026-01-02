@@ -177,7 +177,7 @@ export default function Home() {
 
           {/* 右侧桌台网格 */}
           <div className="lg:col-span-3">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 gap-4">
               {tableStatus?.map(({ table, session }) => (
                 <TableCard
                   key={table.id}
