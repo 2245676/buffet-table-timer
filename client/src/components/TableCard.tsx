@@ -96,11 +96,11 @@ export function TableCard({
     <Card
       className={`border-2 transition-all ${getStatusColor(
         table.status
-      )} hover:shadow-md`}
+      )} hover:shadow-md h-full flex flex-col`}
     >
-      <CardContent className="p-3">
+      <CardContent className="p-3 flex flex-col h-full">
         {/* 顶部行：桌号、状态、信息 */}
-        <div className="flex items-center justify-between gap-3 mb-2">
+        <div className="flex items-center justify-between gap-3 mb-2 flex-shrink-0">
           {/* 左侧：桌号和状态 */}
           <div className="flex items-center gap-2 min-w-0">
             <Clock className="w-4 h-4 text-primary flex-shrink-0" />
@@ -154,13 +154,16 @@ export function TableCard({
 
         {/* 延时信息 */}
         {isActive && session!.extensionCount > 0 && (
-          <div className="text-xs text-muted-foreground mb-2">
+          <div className="text-xs text-muted-foreground mb-2 flex-shrink-0">
             已延时 {session!.extensionCount} 次 ({session!.totalExtensionMinutes} 分钟)
           </div>
         )}
 
+        {/* 中间弹性空间 */}
+        <div className="flex-1" />
+
         {/* 底部行：操作按钮 */}
-        <div className="flex gap-2 flex-wrap">
+        <div className="flex gap-2 flex-wrap flex-shrink-0">
           {table.status === "idle" ? (
             <Button
               onClick={() => onStartDining(table.id)}
