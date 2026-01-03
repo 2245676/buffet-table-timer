@@ -20,9 +20,10 @@ interface DiningSession {
 interface TableCardProps {
   table: Table;
   session: DiningSession | null;
-  onStartDining: (tableId: number) => void;
-  onExtend: (sessionId: number, minutes: number) => void;
-  onComplete: (sessionId: number) => void;
+  onStartDining?: (tableId: number) => void;
+  onExtend?: (sessionId: number, minutes: number) => void;
+  onComplete?: (sessionId: number) => void;
+  onRefresh?: () => void;
 }
 
 const getStatusColor = (status: string) => {
@@ -165,7 +166,7 @@ export function TableCard({
         <div className="flex gap-2 flex-wrap flex-shrink-0">
           {table.status === "idle" ? (
             <Button
-              onClick={() => onStartDining(table.id)}
+              onClick={() => onStartDining?.(table.id)}
               className="flex-1 min-w-[80px] bg-red-600 hover:bg-red-700 text-white text-xs h-8"
               size="sm"
             >
@@ -175,7 +176,7 @@ export function TableCard({
           ) : isActive ? (
             <>
               <Button
-                onClick={() => onExtend(session!.id, 5)}
+                onClick={() => onExtend?.(session!.id, 5)}
                 variant="outline"
                 size="sm"
                 className="flex-1 min-w-[60px] text-xs h-8"
@@ -184,7 +185,7 @@ export function TableCard({
                 +5分
               </Button>
               <Button
-                onClick={() => onExtend(session!.id, 10)}
+                onClick={() => onExtend?.(session!.id, 10)}
                 variant="outline"
                 size="sm"
                 className="flex-1 min-w-[60px] text-xs h-8"
@@ -193,7 +194,7 @@ export function TableCard({
                 +10分
               </Button>
               <Button
-                onClick={() => onComplete(session!.id)}
+                onClick={() => onComplete?.(session!.id)}
                 className="flex-1 min-w-[60px] bg-red-600 hover:bg-red-700 text-white text-xs h-8"
                 size="sm"
               >
@@ -203,7 +204,7 @@ export function TableCard({
             </>
           ) : table.status === "buffer" ? (
             <Button
-              onClick={() => onComplete(session!.id)}
+              onClick={() => onComplete?.(session!.id)}
               className="w-full bg-red-600 hover:bg-red-700 text-white text-xs h-8"
               size="sm"
             >
@@ -216,3 +217,5 @@ export function TableCard({
     </Card>
   );
 }
+
+export default TableCard;

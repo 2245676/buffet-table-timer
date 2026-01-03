@@ -145,3 +145,5 @@ export function QueuePredictionPanel({ prediction }: QueuePredictionPanelProps) 
     </Card>
   );
 }
+
+export default QueuePredictionPanel;
