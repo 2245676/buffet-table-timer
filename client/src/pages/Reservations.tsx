@@ -255,7 +255,7 @@ export default function Reservations() {
 
       <main className="container py-8">
         {/* 统计面板 */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
+        <div className="grid grid-cols-5 gap-2 mb-8 overflow-x-auto">
           <Card className="shadow-elegant">
             <CardContent className="pt-6">
               <div className="text-center">
@@ -462,10 +462,11 @@ export default function Reservations() {
                     id="add-date"
                     type="date"
                     value={formData.reservationDate}
-                    onChange={(e) =>
-                      setFormData({ ...formData, reservationDate: e.target.value })
-                    }
+                    onChange={(e) => {
+                      setFormData({ ...formData, reservationDate: e.target.value });
+                    }}
                     required
+                    autoFocus
                   />
                 </div>
                 <div className="space-y-2">
@@ -496,7 +497,7 @@ export default function Reservations() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="add-phone">客人电话 *</Label>
+                  <Label htmlFor="add-phone">客人电话 * <span className="text-red-500">必填</span></Label>
                   <Input
                     id="add-phone"
                     value={formData.guestPhone}
@@ -538,7 +539,7 @@ export default function Reservations() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="add-source">预约来源 *</Label>
+                  <Label htmlFor="add-source">预约来源 * <span className="text-red-500">必填</span></Label>
                   <Select
                     value={formData.source}
                     onValueChange={(value) =>

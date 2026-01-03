@@ -34,14 +34,7 @@ async function checkAllTables() {
     for (const table of allTables) {
       const session = sessionMap.get(table.id);
 
-      // 处理缓冲期结束
-      if (table.status === "buffer" && session?.bufferEndTime) {
-        if (now >= session.bufferEndTime) {
-          await db.updateTableStatus(table.id, "idle");
-          console.log(`[Monitor] 桌号 ${table.tableNumber} 缓冲期结束，状态更新为空闲`);
-        }
-        continue;
-      }
+      // 去掉缓冲期处理逻辑
 
       // 处理用餐中的桌台
       if (session && session.isCompleted === 0) {
