@@ -155,8 +155,8 @@ export const appRouter = router({
           throw new TRPCError({ code: "NOT_FOUND", message: "用餐记录不存在" });
         }
 
-        // 更新桌台状态为缓冲期
-        await db.updateTableStatus(session.tableId, "buffer");
+        // 更新桌台状态为空闲（去掉缓冲期）
+        await db.updateTableStatus(session.tableId, "idle");
 
         return session;
       }),

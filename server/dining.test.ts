@@ -123,11 +123,10 @@ describe("桌台管理系统测试", () => {
       expect(completedSession).toBeDefined();
       expect(completedSession.isCompleted).toBe(1);
       expect(completedSession.actualEndTime).toBeDefined();
-      expect(completedSession.bufferEndTime).toBeDefined();
 
-      // 检查桌台状态是否更新为缓冲期
+      // 检查桌台状态是否更新为空闲（去掉缓冲期）
       const table = await db.getTableById(testTableId);
-      expect(table?.status).toBe("buffer");
+      expect(table?.status).toBe("idle");
     });
   });
 

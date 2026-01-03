@@ -263,14 +263,10 @@ export async function completeDiningSession(id: number): Promise<DiningSession |
   if (!session) return undefined;
   
   const now = Date.now();
-  const table = await getTableById(session.tableId);
-  if (!table) return undefined;
   
-  const bufferEndTime = now + table.bufferDuration * 60 * 1000;
-  
+  // 去掉缓冲期逻辑，直接标记为已完成
   return await updateDiningSession(id, {
     actualEndTime: now,
-    bufferEndTime: bufferEndTime,
     isCompleted: 1,
   });
 }

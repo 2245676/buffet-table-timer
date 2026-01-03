@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -36,8 +37,6 @@ const getStatusColor = (status: string) => {
       return "bg-yellow-50 border-yellow-200";
     case "timeout":
       return "bg-red-50 border-red-200";
-    case "buffer":
-      return "bg-purple-50 border-purple-200";
     case "disabled":
       return "bg-gray-50 border-gray-200";
     default:
@@ -48,19 +47,17 @@ const getStatusColor = (status: string) => {
 const getStatusBadge = (status: string) => {
   switch (status) {
     case "idle":
-      return <Badge className="bg-green-100 text-green-700 border-green-300 text-xs">空闲</Badge>;
+      return <Badge className="bg-green-100 text-green-700 border-green-300">空闲</Badge>;
     case "dining":
-      return <Badge className="bg-blue-100 text-blue-700 border-blue-300 text-xs">用餐中</Badge>;
+      return <Badge className="bg-blue-100 text-blue-700 border-blue-300">用餐中</Badge>;
     case "warning":
-      return <Badge className="bg-yellow-100 text-yellow-700 border-yellow-300 text-xs">即将超时</Badge>;
+      return <Badge className="bg-yellow-100 text-yellow-700 border-yellow-300">即将超时</Badge>;
     case "timeout":
-      return <Badge className="bg-red-100 text-red-700 border-red-300 text-xs">已超时</Badge>;
-    case "buffer":
-      return <Badge className="bg-purple-100 text-purple-700 border-purple-300 text-xs">缓冲期</Badge>;
+      return <Badge className="bg-red-100 text-red-700 border-red-300">已超时</Badge>;
     case "disabled":
-      return <Badge className="bg-gray-100 text-gray-700 border-gray-300 text-xs">停用</Badge>;
+      return <Badge className="bg-gray-100 text-gray-700 border-gray-300">停用</Badge>;
     default:
-      return <Badge className="text-xs">未知</Badge>;
+      return <Badge>{status}</Badge>;
   }
 };
 
@@ -69,36 +66,47 @@ const formatTime = (timestamp: number) => {
   return date.toLocaleTimeString("zh-CN", {
     hour: "2-digit",
     minute: "2-digit",
+    hour12: false,
   });
 };
 
-const formatDuration = (ms: number) => {
-  const minutes = Math.floor(ms / 60000);
-  const hours = Math.floor(minutes / 60);
-  if (hours > 0) {
-    return `${hours}h${minutes % 60}m`;
-  }
-  return `${minutes}m`;
-};
-
-export function TableCard({
+export default function TableCard({
   table,
   session,
   onStartDining,
   onExtend,
   onComplete,
+  onRefresh,
 }: TableCardProps) {
-  const isActive = session && session.isCompleted === 0;
-  const now = Date.now();
-  const remaining = isActive ? Math.max(0, session!.endTime - now) : 0;
-  const remainingDisplay = remaining > 0 ? formatDuration(remaining) : "已超时";
+  const [remaining, setRemaining] = useState(0);
+  const [remainingDisplay, setRemainingDisplay] = useState("--:--");
+
+  const isActive = session && session.isCompleted === 0 && (table.status === "dining" || table.status === "warning" || table.status === "timeout");
+
+  useEffect(() => {
+    if (!isActive) return;
+
+    const updateRemaining = () => {
+      const now = Date.now();
+      const diff = session!.endTime - now;
+      setRemaining(diff);
+
+      if (diff <= 0) {
+        setRemainingDisplay("已超时");
+      } else {
+        const minutes = Math.floor(diff / 60000);
+        const seconds = Math.floor((diff % 60000) / 1000);
+        setRemainingDisplay(`${minutes}:${seconds.toString().padStart(2, "0")}`);
+      }
+    };
+
+    updateRemaining();
+    const interval = setInterval(updateRemaining, 1000);
+    return () => clearInterval(interval);
+  }, [isActive, session]);
 
   return (
-    <Card
-      className={`border-2 transition-all ${getStatusColor(
-        table.status
-      )} hover:shadow-md h-48 flex flex-col`}
-    >
+    <Card className={`border-2 h-48 flex flex-col ${getStatusColor(table.status)}`}>
       <CardContent className="p-3 flex flex-col h-full">
         {/* 顶部行：桌号在最上面 */}
         <div className="flex items-center justify-between gap-2 mb-2 flex-shrink-0">
@@ -137,17 +145,17 @@ export function TableCard({
             </div>
           )}
 
-          {/* 缓冲期信息 */}
-          {table.status === "buffer" && session?.bufferEndTime && (
-            <div className="text-xs text-muted-foreground whitespace-nowrap">
-              缓冲期至 {formatTime(session.bufferEndTime)}
-            </div>
-          )}
-
           {/* 空闲状态 */}
           {table.status === "idle" && (
             <div className="text-xs text-muted-foreground whitespace-nowrap">
               空闲可用
+            </div>
+          )}
+
+          {/* 已超时状态 */}
+          {table.status === "timeout" && (
+            <div className="text-xs text-red-600 font-semibold whitespace-nowrap">
+              已超时
             </div>
           )}
         </div>
@@ -202,14 +210,14 @@ export function TableCard({
                 结束
               </Button>
             </>
-          ) : table.status === "buffer" ? (
+          ) : table.status === "timeout" ? (
             <Button
               onClick={() => onComplete?.(session!.id)}
               className="w-full bg-red-600 hover:bg-red-700 text-white text-xs h-8"
               size="sm"
             >
               <PauseCircle className="w-3 h-3 mr-1" />
-              结束缓冲期
+              结束
             </Button>
           ) : null}
         </div>
@@ -217,5 +225,3 @@ export function TableCard({
     </Card>
   );
 }
-
-export default TableCard;

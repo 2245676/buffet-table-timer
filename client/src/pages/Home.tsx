@@ -99,8 +99,8 @@ export default function Home() {
         </div>
       </header>
 
-      <main className="container py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+      <main className="container py-4 md:py-8 px-2 md:px-4">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-3 md:gap-6">
           {/* 左侧排队预测面板 */}
           <div className="lg:col-span-1">
             {queuePrediction && (
@@ -111,7 +111,7 @@ export default function Home() {
           {/* 右侧桌台网格 */}
           <div className="lg:col-span-3">
             {allStatus && allStatus.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 auto-rows-max">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 md:gap-4 auto-rows-max">
                 {allStatus.map((item) => (
                   <TableCard
                     key={item.table.id}

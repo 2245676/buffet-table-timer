@@ -3,7 +3,7 @@ import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ChevronLeft, ChevronRight, Calendar } from "lucide-react";
+import { ChevronLeft, ChevronRight, Calendar, ArrowLeft } from "lucide-react";
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths } from "date-fns";
 import { zhCN } from "date-fns/locale";
 
@@ -48,56 +48,85 @@ export default function ReservationCalendar() {
 
   // 填充前后空白天数
   const firstDayOfWeek = monthStart.getDay();
-  const lastDayOfWeek = monthEnd.getDay();
-  const prevMonthDays = Array(firstDayOfWeek).fill(null);
-  const nextMonthDays = Array(6 - lastDayOfWeek).fill(null);
-  const allDays = [...prevMonthDays, ...days, ...nextMonthDays];
+  const calendarDays = [
+    ...Array(firstDayOfWeek).fill(null),
+    ...days,
+  ];
 
-  const handlePrevMonth = () => setCurrentDate(subMonths(currentDate, 1));
-  const handleNextMonth = () => setCurrentDate(addMonths(currentDate, 1));
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case "pending":
+        return <Badge className="bg-yellow-100 text-yellow-700 text-xs">待确认</Badge>;
+      case "confirmed":
+        return <Badge className="bg-blue-100 text-blue-700 text-xs">已确认</Badge>;
+      case "arrived":
+        return <Badge className="bg-green-100 text-green-700 text-xs">已到店</Badge>;
+      case "completed":
+        return <Badge className="bg-gray-100 text-gray-700 text-xs">已完成</Badge>;
+      case "cancelled":
+        return <Badge className="bg-red-100 text-red-700 text-xs">已取消</Badge>;
+      default:
+        return <Badge className="text-xs">{status}</Badge>;
+    }
+  };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-50 p-6">
-      <div className="max-w-7xl mx-auto">
-        {/* 头部 */}
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-3">
-            <Calendar className="w-8 h-8 text-red-500" />
-            <h1 className="text-3xl font-bold">预约日历</h1>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-50">
+      {/* 头部 */}
+      <header className="bg-gradient-to-r from-primary to-primary/80 shadow-elegant border-b sticky top-0 z-20">
+        <div className="container py-4 md:py-6">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 md:gap-3 min-w-0">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => (window.location.href = "/reservations")}
+                className="text-white hover:bg-white/20 flex-shrink-0"
+              >
+                <ArrowLeft className="w-4 h-4" />
+              </Button>
+              <div className="p-1.5 md:p-2 bg-white rounded-lg shadow-md flex-shrink-0">
+                <Calendar className="w-5 h-5 md:w-6 md:h-6 text-primary" />
+              </div>
+              <div className="min-w-0">
+                <h1 className="text-lg md:text-2xl font-bold text-white truncate">预约日历</h1>
+                <p className="text-blue-100 text-xs md:text-sm mt-0.5">查看未来预约</p>
+              </div>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => (window.location.href = "/")}
+              className="gap-2 bg-white hover:bg-blue-50 text-xs md:text-sm flex-shrink-0"
+            >
+              返回桌台
+            </Button>
           </div>
-          <Button
-            variant="outline"
-            onClick={() => {
-              setCurrentDate(new Date());
-              setSelectedDate(null);
-            }}
-            className="bg-white"
-          >
-            返回今天
-          </Button>
         </div>
+      </header>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* 左侧日历 */}
+      <main className="container py-4 md:py-8 px-2 md:px-4">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
+          {/* 日历部分 */}
           <div className="lg:col-span-2">
             <Card className="shadow-elegant">
-              <CardHeader className="pb-4">
-                <div className="flex items-center justify-between">
+              <CardHeader className="pb-3 md:pb-4">
+                <div className="flex items-center justify-between gap-2">
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={handlePrevMonth}
+                    onClick={() => setCurrentDate(subMonths(currentDate, 1))}
                     className="h-8 w-8 p-0"
                   >
                     <ChevronLeft className="w-4 h-4" />
                   </Button>
-                  <CardTitle className="text-xl">
-                    {format(currentDate, "yyyy年 MMMM", { locale: zhCN })}
-                  </CardTitle>
+                  <h2 className="text-base md:text-lg font-bold">
+                    {format(currentDate, "yyyy年MM月", { locale: zhCN })}
+                  </h2>
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={handleNextMonth}
+                    onClick={() => setCurrentDate(addMonths(currentDate, 1))}
                     className="h-8 w-8 p-0"
                   >
                     <ChevronRight className="w-4 h-4" />
@@ -106,45 +135,42 @@ export default function ReservationCalendar() {
               </CardHeader>
               <CardContent>
                 {/* 星期头 */}
-                <div className="grid grid-cols-7 gap-2 mb-4">
+                <div className="grid grid-cols-7 gap-1 md:gap-2 mb-2">
                   {["日", "一", "二", "三", "四", "五", "六"].map((day) => (
-                    <div key={day} className="text-center font-semibold text-sm text-muted-foreground py-2">
+                    <div key={day} className="text-center font-semibold text-xs md:text-sm text-muted-foreground py-2">
                       {day}
                     </div>
                   ))}
                 </div>
 
                 {/* 日期网格 */}
-                <div className="grid grid-cols-7 gap-2">
-                  {allDays.map((day, index) => {
+                <div className="grid grid-cols-7 gap-1 md:gap-2">
+                  {calendarDays.map((day, idx) => {
                     if (!day) {
-                      return <div key={`empty-${index}`} className="aspect-square" />;
+                      return <div key={`empty-${idx}`} className="aspect-square" />;
                     }
 
                     const dateStr = format(day, "yyyy-MM-dd");
                     const count = reservationsByDate[dateStr] || 0;
                     const isSelected = selectedDate && isSameDay(day, selectedDate);
                     const isToday = isSameDay(day, new Date());
-                    const isCurrentMonth = isSameMonth(day, currentDate);
 
                     return (
                       <button
                         key={dateStr}
                         onClick={() => setSelectedDate(day)}
-                        className={`aspect-square rounded-lg border-2 transition-all flex flex-col items-center justify-center gap-1 p-1 ${
+                        className={`aspect-square rounded-lg border-2 p-1 md:p-2 text-xs md:text-sm font-medium transition-all flex flex-col items-center justify-center gap-0.5 ${
                           isSelected
-                            ? "border-red-500 bg-red-50"
+                            ? "border-primary bg-primary/10"
                             : isToday
-                            ? "border-blue-500 bg-blue-50"
-                            : "border-slate-200 hover:border-slate-300"
-                        } ${!isCurrentMonth ? "opacity-40" : ""}`}
+                            ? "border-blue-300 bg-blue-50"
+                            : "border-gray-200 hover:border-gray-300"
+                        }`}
                       >
-                        <div className={`text-sm font-semibold ${!isCurrentMonth ? "text-muted-foreground" : ""}`}>
-                          {format(day, "d")}
-                        </div>
+                        <span className={isSelected ? "text-primary font-bold" : ""}>{day.getDate()}</span>
                         {count > 0 && (
-                          <Badge variant="secondary" className="text-xs px-1.5 py-0 h-5">
-                            {count}个预约
+                          <Badge className="bg-red-100 text-red-700 text-xs px-1 py-0 h-5">
+                            {count}
                           </Badge>
                         )}
                       </button>
@@ -155,74 +181,49 @@ export default function ReservationCalendar() {
             </Card>
           </div>
 
-          {/* 右侧预约列表 */}
-          <div>
-            <Card className="shadow-elegant h-full flex flex-col">
-              <CardHeader className="pb-3 border-b flex-shrink-0">
-                <CardTitle className="text-lg">
-                  {selectedDate
-                    ? format(selectedDate, "yyyy年M月d日 EEEE", { locale: zhCN })
-                    : "选择日期"}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="flex-1 overflow-y-auto pt-4">
-                {selectedDate && selectedDateReservations && selectedDateReservations.length > 0 && selectedDate ? (
-                  <div className="space-y-3">
-                    {selectedDateReservations.map((res: any) => (
-                      <div
-                        key={res.id}
-                        className="p-3 rounded-lg border border-slate-200 hover:border-slate-300 transition-all"
-                      >
-                        <div className="flex items-center justify-between mb-2">
-                          <div className="font-semibold text-sm">{res.guestName}</div>
-                          <Badge
-                            variant={
-                              res.status === "confirmed"
-                                ? "default"
-                                : res.status === "arrived"
-                                ? "secondary"
-                                : res.status === "completed"
-                                ? "outline"
-                                : "destructive"
-                            }
-                            className="text-xs"
-                          >
-                            {res.status === "pending"
-                              ? "待确认"
-                              : res.status === "confirmed"
-                              ? "已确认"
-                              : res.status === "arrived"
-                              ? "已到店"
-                              : res.status === "completed"
-                              ? "已完成"
-                              : "已取消"}
-                          </Badge>
+          {/* 预约列表部分 */}
+          <div className="lg:col-span-1">
+            {selectedDate ? (
+              <Card className="shadow-elegant">
+                <CardHeader className="pb-3 md:pb-4">
+                  <CardTitle className="text-base md:text-lg">
+                    {format(selectedDate, "MM月dd日", { locale: zhCN })}的预约
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2 md:space-y-3 max-h-96 overflow-y-auto">
+                  {selectedDateReservations && selectedDateReservations.length > 0 ? (
+                    selectedDateReservations.map((res: any) => (
+                      <div key={res.id} className="border rounded-lg p-2 md:p-3 bg-gray-50 text-xs md:text-sm">
+                        <div className="flex justify-between items-start gap-2 mb-1.5">
+                          <div className="font-semibold truncate">{res.guestName}</div>
+                          {getStatusBadge(res.status)}
                         </div>
-                        <div className="text-xs text-muted-foreground space-y-1">
+                        <div className="text-muted-foreground space-y-0.5 text-xs">
                           <div>📞 {res.guestPhone}</div>
-                          <div>🕐 {res.reservationTime}</div>
+                          <div>⏰ {res.reservationTime}</div>
                           <div>👥 {res.partySize}人</div>
                           {res.remarks && <div>📝 {res.remarks}</div>}
                         </div>
                       </div>
-                    ))}
-                  </div>
-                ) : selectedDate ? (
-                  <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground py-8">
-                    <Calendar className="w-8 h-8 mb-2 opacity-50" />
-                    <p className="text-sm">该日期暂无预约</p>
-                  </div>
-                ) : (
-                  <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground py-8">
-                    <Calendar className="w-8 h-8 mb-2 opacity-50" />
-                    <p className="text-sm">请选择日期查看预约</p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+                    ))
+                  ) : (
+                    <div className="text-center text-muted-foreground py-8 text-xs md:text-sm">
+                      该日期暂无预约
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            ) : (
+              <Card className="shadow-elegant">
+                <CardContent className="pt-6 md:pt-8 text-center text-muted-foreground text-xs md:text-sm">
+                  <Calendar className="w-8 h-8 md:w-10 md:h-10 mx-auto mb-2 md:mb-3 opacity-50" />
+                  <p>请选择日期查看预约</p>
+                </CardContent>
+              </Card>
+            )}
           </div>
         </div>
-      </div>
+      </main>
     </div>
   );
 }
