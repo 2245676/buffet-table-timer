@@ -234,6 +234,14 @@ export default function Reservations() {
                 切换到桌台计时
               </Button>
               <Button
+                variant="outline"
+                size="sm"
+                onClick={() => (window.location.href = "/calendar")}
+                className="gap-2 bg-white hover:bg-blue-50"
+              >
+                预约日历
+              </Button>
+              <Button
                 onClick={handleAddClick}
                 className="gap-2 bg-white text-primary hover:bg-blue-50"
               >

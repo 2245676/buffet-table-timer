@@ -1,7 +1,9 @@
+
 import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
+import { reservationTableSyncRouter } from "./routers/reservation-table-sync";
 import { z } from "zod";
 import * as db from "./db";
 import { TRPCError } from "@trpc/server";
@@ -10,6 +12,7 @@ import { reservationRouter } from "./routers/reservation";
 export const appRouter = router({
   system: systemRouter,
   reservation: reservationRouter,
+  reservationTableSync: reservationTableSyncRouter,
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
     logout: publicProcedure.mutation(({ ctx }) => {
